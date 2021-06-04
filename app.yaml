@@ -11,5 +11,8 @@ resources:
   cpu: 1
   memory_gb: 0.5
   disk_size_gb: 10
-includes:
-    - extra_env_vars.yaml
+network:
+  session_affinity: true
+  forwarded_ports:
+  - 65080
+  instance_tag: websocket

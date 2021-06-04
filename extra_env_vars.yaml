@@ -1,4 +1,0 @@
-env_variables: 
-    MONGO_CLIENT: mongodb+srv://kimiakavanroodi:!@Ramz12@cluster0.5iqdk.mongodb.net/myFirstDatabase?retryWrites=true&w=majority
-    DB_HOST: https://atlasplanner-e530e-default-rtdb.firebaseio.com
-    FB_CLIENT: ./atlasplanner-e530e-firebase-adminsdk-dvqy8-b4c817c93b.json

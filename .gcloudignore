@@ -12,7 +12,6 @@
 # below:
 .git
 .gitignore
-extra_env_vars.yaml
 
 # Node.js dependencies:
 node_modules/
