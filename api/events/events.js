@@ -1,6 +1,8 @@
 const { Db } = require("mongodb");
 const userValidation = require("../users/users");
 
+
+
 const getAllEvents = (req, res) => {
     const authHeader = req.headers.authorization
 
@@ -26,19 +28,26 @@ const getAllEvents = (req, res) => {
 }
 
 const getEvent = (req, res) => {
+    const authHeader = req.headers.authorization
 
     const orgId = req.params.orgId
     const eventId = req.params.eventId
 
-    return req.app.locals.db.collection('events').find({"_orgId": orgId, "name": eventId }).toArray(function(err, docs) { 
-        if (docs && docs.length != 0) {
-            if (!err) {
-                const jsonBody = {}
-                jsonBody["events"] = docs
-                res.status(200).send(jsonBody)
+    userValidation.getUID(authHeader).then((_uid) => {
+        if (_uid != null) {
+            req.app.locals.db.collection('events').find({"_orgId": orgId, "name": eventId, "owner": _uid }).toArray(function(err, docs) { 
+                if (docs && docs.length != 0) {
+                    if (!err) {
+                        const jsonBody = {}
+                        jsonBody["events"] = docs
+                        res.status(200).send(jsonBody)
+                        }
+                } else {
+                    res.status(403).json({'error': 'event does not exist'});
                 }
+            })
         } else {
-            res.status(403).json({'error': 'event does not exist'});
+            res.status(403).json({ error: 'invalid token' });
         }
     })
 }
@@ -50,6 +59,7 @@ const createEvent = (req, res) => {
     const orgId = req.params.orgId
     const eventName = req.body.name
     const description = req.body.description 
+    const instruction = req.body.instruction
     const color = req.body.color
 
     if (eventName == "") {
@@ -70,6 +80,7 @@ const createEvent = (req, res) => {
                             '_orgId': orgId,
                             'name': eventName,
                             'owner': _uid,
+                            'instruction': instruction,
                             'description': description,
                             'color': color
                         }
@@ -113,12 +124,41 @@ const deleteEvent = (req, res) => {
     })
 }
 
+const updateEvent = (req, res) => {
+    const authHeader = req.headers.authorization
+
+    const orgId = req.params.orgId
+    const eventId = req.params.eventId
+
+    const eventBody = req.body.event
+
+    userValidation.getUID(authHeader).then((_uid) => {
+        if (_uid != null) {
+            eventBody["owner"] = _uid
+            req.app.locals.db.collection('events').find({"_orgId": orgId, "name": eventId, "owner": _uid }).toArray(function(err, docEvents) {
+                if (docEvents.length != 0) {
+                    req.app.locals.db.collection('events').replaceOne({"_orgId": orgId, "name": eventId, "owner": _uid }, eventBody).then(() => {
+                        const jsonBody = {}
+                        jsonBody["event"] = eventBody
+                        res.status(200).send(jsonBody)
+                    })
+                } else {
+                    res.status(403).json({ error: 'event does not exist.' });
+                }
+            }) 
+        } else {
+            res.status(403).json({ error: 'invalid token' });
+        }
+    })
+}
+
 
 const eventRoutes = {
     'getAllEvents': getAllEvents,
     'getEvent': getEvent,
     'createEvent': createEvent,
-    'deleteEvent': deleteEvent
+    'deleteEvent': deleteEvent,
+    'updateEvent': updateEvent
 }
 
 module.exports = eventRoutes

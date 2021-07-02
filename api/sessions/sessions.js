@@ -60,18 +60,22 @@ const createSession = (req, res) => {
         'descriptions': req.body.descriptions,
         'section': req.body.section,
         'link': req.body.link,
-        'timeslots': req.body.timeslots
+        'timeslots': req.body.timeslots,
+        'box_a': req.body.box_a,
+        'box_b': req.body.box_b,
+        'box_c': req.body.box_c
     }
 
     const io = req.app.get('socketio')
     keyCollection.find({ '_orgId': orgId, '_eventName': eventId, 'key': key  }).toArray(function(err, docKeys) {
         if (docKeys.length != 0) {
-            collection.insertOne(sessionBody).then((resp) => {
+            collection.insertOne(sessionBody).then((doc) => {
 
                 const jsonBody = {}
+                sessionBody["_id"] = doc.insertedId
                 jsonBody["sessions"] = sessionBody
                 res.status(200).send(jsonBody)
-                io.to(sessionBody['_orgId'] + "-" + sessionBody["_eventId"] + "-sessions").emit('ADDED_SESSION', sessionBody);
+                io.in(sessionBody['_orgId'] + "-" + sessionBody["_eventId"] + "-edit-sessions").in(sessionBody['_orgId'] + "-" + sessionBody["_eventId"] + "-sessions").emit('ADDED_SESSION', sessionBody);
          
                 })
         } else {
@@ -87,6 +91,8 @@ const updateSession = (req, res) => {
 
     const obj_session = new mongo.ObjectID(sessionId)
 
+    console.log(session)
+
     delete session["_id"]
 
     const collection = req.app.locals.db.collection("sessions")
@@ -99,7 +105,9 @@ const updateSession = (req, res) => {
         jsonBody["sessions"] = session
         session["_id"] = sessionId
         res.status(200).send(jsonBody)
-        io.to(session['_orgId'] + "-" + session["_eventId"] + "-sessions").emit('UPDATED_SESSION', session);
+
+        
+        io.in(session['_orgId'] + "-" + session["_eventId"] + "-edit-sessions").in(session['_orgId'] + "-" + session["_eventId"] + "-sessions").emit('UPDATED_SESSION', session);
     })
 }
 
@@ -123,7 +131,7 @@ const deleteSession = (req, res) => {
                 const jsonBody = {}
                 jsonBody["_id"] = sessionId
                 res.status(200).send(jsonBody)
-                io.to(orgId  + "-" + eventId + "-sessions").emit('DELETED_SESSION', sessionId);
+                io.in(orgId  + "-" + eventId + "-edit-sessions").in(orgId  + "-" + eventId + "-sessions").emit('DELETED_SESSION', sessionId);
             })
         } else {
             res.status(403).json({ "error": "key is incorrect"})

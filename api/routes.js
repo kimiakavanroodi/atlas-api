@@ -18,6 +18,7 @@ module.exports = function(app) {
     app.get('/events/:orgId/:eventId', eventRoutes['getEvent'])
     app.post('/events/:orgId', eventRoutes['createEvent'])
     app.delete('/events/:orgId/:eventId', eventRoutes['deleteEvent'])
+    app.put('/events/:orgId/:eventId', eventRoutes['updateEvent'])
 
     app.get('/sessions/:orgId/:eventId', sessionsRoutes['getAllSessions'])
     app.post('/sessions/:orgId/:eventId', sessionsRoutes['createSession'])
