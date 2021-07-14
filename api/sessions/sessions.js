@@ -57,6 +57,7 @@ const createSession = (req, res) => {
         '_eventId': eventId,
         'category': req.body.category,
         'name': req.body.name,
+        'email': req.body.email,
         'descriptions': req.body.descriptions,
         'section': req.body.section,
         'link': req.body.link,
