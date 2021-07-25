@@ -4,6 +4,23 @@ const userValidation = require("../users/users");
 const express = require('express')
 const app = express()
 
+const sessionExists = (req, res) => {
+    
+    let orgId = req.params.orgId
+    let eventId = req.params.eventId
+    let sessionId = new mongo.ObjectID(req.params.sessionId)
+
+    const sessions = req.app.locals.db.collection("sessions")
+
+    sessions.find({ '_eventId' : eventId, '_orgId': orgId, '_id': sessionId }).toArray(function(err, docEvents) {
+        if (docEvents.length != 0) {
+            res.status(200).send(docEvents[0])
+        } else {
+            res.status(200).send(false)
+        }
+    })
+}
+
 const getAllSessions = (req, res) => {
     
     const orgId = req.params.orgId
@@ -85,14 +102,28 @@ const createSession = (req, res) => {
     })
 }
 
+const getSession = (req, res) => {
+    const orgId = req.params.orgId
+    const eventId = req.params.eventId
+    const obj_session = new mongo.ObjectID(req.params.sessionId)
+
+    const sessions = req.app.locals.db.collection("sessions")
+
+    sessions.find({ '_eventId' : eventId, '_orgId': orgId, '_id': obj_session}).toArray(function(err, docs) {
+        if (docs.length != 0) {
+            res.status(200).send(docs)
+        } else {
+            res.status(400).send([])
+        }
+    })
+};
+
 const updateSession = (req, res) => {
 
     const sessionId = req.params.sessionId
     const session = req.body.session
 
     const obj_session = new mongo.ObjectID(sessionId)
-
-    console.log(session)
 
     delete session["_id"]
 
@@ -144,7 +175,9 @@ const sessionsRoutes = {
     'getAllSessions': getAllSessions,
     'createSession': createSession,
     'updateSession': updateSession,
-    'deleteSession': deleteSession
+    'deleteSession': deleteSession,
+    'sessionExists': sessionExists,
+    'getSession': getSession
 }
 
 module.exports = sessionsRoutes

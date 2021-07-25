@@ -4,6 +4,7 @@ const cors = require('cors');
 const eventRoutes = require("./events/events");
 const sessionsRoutes = require("./sessions/sessions");
 const keyRoutes = require("./keys/keys");
+const bookings = require("./bookings/bookings");
 
 module.exports = function(app) {
     app.use(express.json());
@@ -20,6 +21,7 @@ module.exports = function(app) {
     app.delete('/events/:orgId/:eventId', eventRoutes['deleteEvent'])
     app.put('/events/:orgId/:eventId', eventRoutes['updateEvent'])
 
+    app.get('/sessions/:orgId/:eventId/:sessionId', sessionsRoutes['getSession'])
     app.get('/sessions/:orgId/:eventId', sessionsRoutes['getAllSessions'])
     app.post('/sessions/:orgId/:eventId', sessionsRoutes['createSession'])
     app.put('/sessions/:orgId/:eventId/:sessionId', sessionsRoutes['updateSession'])
@@ -28,4 +30,10 @@ module.exports = function(app) {
     app.post('/keys/:orgId/:eventId', keyRoutes['createKey']) 
     app.get('/keys/:orgId/:eventId', keyRoutes['getKey'])
     app.put('/keys/:orgId/:eventId', keyRoutes['updateKey'])
+
+    app.delete('/bookings/:orgId/:eventId/:sessionId/:bookingId', bookings['deleteBooking']) 
+
+    app.get('/event-exists/:orgId/:eventId', eventRoutes['eventExists'])
+    app.get('/session-exists/:orgId/:eventId/:sessionId', sessionsRoutes['sessionExists']) 
+
 };

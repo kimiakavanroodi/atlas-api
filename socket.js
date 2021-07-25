@@ -6,7 +6,6 @@ module.exports = function(io) {
         var currentRoom = ""
 
         socket.on('sessions', function(data) {
-            console.log(data)
             socket.join(data);            
         });
 

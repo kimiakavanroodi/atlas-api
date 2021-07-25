@@ -2,6 +2,22 @@ const { Db } = require("mongodb");
 const userValidation = require("../users/users");
 
 
+const eventExists = (req, res) => {
+    let eventId = req.params.eventId
+    let orgId = req.params.orgId
+
+    let events = req.app.locals.db.collection('events')
+
+    events.find({ "_orgId": orgId, 'name': eventId }).toArray(function(err, docs) {
+        if (docs.length != 0) {
+            res.status(200).send(true)
+            return;
+        } else {
+            res.status(200).send(false)
+            return;
+        }
+    })
+}
 
 const getAllEvents = (req, res) => {
     const authHeader = req.headers.authorization
@@ -41,7 +57,7 @@ const getEvent = (req, res) => {
                         const jsonBody = {}
                         jsonBody["events"] = docs
                         res.status(200).send(jsonBody)
-                        }
+                    }
                 } else {
                     res.status(403).json({'error': 'event does not exist'});
                 }
@@ -156,6 +172,7 @@ const updateEvent = (req, res) => {
 const eventRoutes = {
     'getAllEvents': getAllEvents,
     'getEvent': getEvent,
+    'eventExists': eventExists,
     'createEvent': createEvent,
     'deleteEvent': deleteEvent,
     'updateEvent': updateEvent
