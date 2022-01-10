@@ -3,6 +3,8 @@ var mongo = require('mongodb');
 const userValidation = require("../users/users");
 const express = require('express')
 const app = express()
+var request = require('request');
+
 
 const sessionExists = (req, res) => {
     
@@ -20,6 +22,46 @@ const sessionExists = (req, res) => {
         }
     })
 }
+
+const createBulkSession = (req, res) => {
+    const authHeader = req.headers.authorization
+
+    let orgId = req.params.orgId
+    let eventId = req.params.eventId
+
+
+    const bulkSessions = JSON.parse(req.body.session)
+    const sessions = req.app.locals.db.collection("sessions")
+
+    userValidation.getUID(authHeader).then((_uid) => {
+        if (_uid != null) {
+            req.app.locals.db.collection('events').find({"_orgId": orgId, "name": eventId, "owner": _uid }).toArray(function(err, docs) { 
+                if (docs.length != 0 && docs) {
+
+                    sessions.insertMany(bulkSessions)
+
+                    var options = {
+                        'method': 'POST',
+                        'url': `https://atlasplanner-email-dot-atlasplanner.ue.r.appspot.com/bulk-uploads/${orgId}/${eventId}`,
+                        'headers': {
+                            'Content-Type': 'application/json',
+                            'Authorization': authHeader,
+                    },
+                        body: JSON.stringify({ 'sessions' : bulkSessions, 'email': req.body.email, 'subject':  req.body.subject })
+                    };
+
+                    request(options, function(err, response) {
+                        if (!err) {
+                            res.status(200).send("Created profile")
+                        } else {
+                            console.log(err)
+                        };
+                    });
+                };
+            });
+        }
+    })
+};
 
 const getAllSessions = (req, res) => {
     
@@ -41,7 +83,10 @@ const getAllSessions = (req, res) => {
                     collection.find({ '_eventId' : eventId, '_orgId': orgId }).toArray(function(err, docs) {
                         const jsonBody = {}
                         jsonBody['event_info'] = {}
+                        jsonBody['event_info']['color'] = docEvents[0]['color']
                         jsonBody['event_info']['description'] = docEvents[0]['description']
+                        jsonBody['event_info']['theme_color'] = docEvents[0]['theme_color']
+                        jsonBody['event_info']['banner_color'] = docEvents[0]['banner_color']
                         jsonBody['event_info']['instruction'] = docEvents[0]['instruction']
                         jsonBody["sessions"] = docs
                         res.status(200).send(jsonBody)
@@ -78,6 +123,7 @@ const createSession = (req, res) => {
         'descriptions': req.body.descriptions,
         'section': req.body.section,
         'link': req.body.link,
+        'max_per_slot': req.body.max_per_slot,
         'timeslots': req.body.timeslots,
         'box_a': req.body.box_a,
         'box_b': req.body.box_b,
@@ -122,6 +168,8 @@ const updateSession = (req, res) => {
 
     const sessionId = req.params.sessionId
     const session = req.body.session
+
+    console.log(session)
 
     const obj_session = new mongo.ObjectID(sessionId)
 
@@ -174,6 +222,7 @@ const deleteSession = (req, res) => {
 const sessionsRoutes = {
     'getAllSessions': getAllSessions,
     'createSession': createSession,
+    'createBulkSession': createBulkSession,
     'updateSession': updateSession,
     'deleteSession': deleteSession,
     'sessionExists': sessionExists,

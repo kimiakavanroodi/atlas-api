@@ -6,6 +6,8 @@ const eventExists = (req, res) => {
     let eventId = req.params.eventId
     let orgId = req.params.orgId
 
+    console.log(eventId)
+
     let events = req.app.locals.db.collection('events')
 
     events.find({ "_orgId": orgId, 'name': eventId }).toArray(function(err, docs) {
@@ -43,6 +45,29 @@ const getAllEvents = (req, res) => {
     })
 }
 
+const isEventOwner = (req, res) => {
+    const authHeader = req.headers.authorization
+
+    const orgId = req.params.orgId
+    const eventId = req.params.eventId
+
+    userValidation.getUID(authHeader).then((_uid) => {
+        if (_uid != null) {
+            req.app.locals.db.collection('events').find({"_orgId": orgId, "name": eventId, "owner": _uid }).toArray(function(err, docs) { 
+                if (docs && docs.length != 0) {
+                    console.log('event')
+                    res.status(200).send(true)
+                } else {
+                    res.status(403).json(false);
+                }
+            })
+        } else {
+            res.status(403).json(false);
+        }
+    })
+
+};
+
 const getEvent = (req, res) => {
     const authHeader = req.headers.authorization
 
@@ -76,7 +101,8 @@ const createEvent = (req, res) => {
     const eventName = req.body.name
     const description = req.body.description 
     const instruction = req.body.instruction
-    const color = req.body.color
+    const theme_color = req.body.theme_color
+    const bannerColor = req.body.banner_color
 
     if (eventName == "") {
         res.status(400).json({ "error": "bad request"})
@@ -98,7 +124,8 @@ const createEvent = (req, res) => {
                             'owner': _uid,
                             'instruction': instruction,
                             'description': description,
-                            'color': color
+                            'theme_color': theme_color,
+                            'banner_color': bannerColor
                         }
                     
                         collection.insertOne(eventBody).then((resp) => {
@@ -172,6 +199,7 @@ const updateEvent = (req, res) => {
 const eventRoutes = {
     'getAllEvents': getAllEvents,
     'getEvent': getEvent,
+    'isEventOwner': isEventOwner,
     'eventExists': eventExists,
     'createEvent': createEvent,
     'deleteEvent': deleteEvent,

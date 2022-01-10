@@ -40,7 +40,8 @@ const getOrganization = (req, res) => {
             res.status(403).json({ error: 'invalid token' });
         }
     })
-}
+};
+
 
 const createOrganization = (req, res) => {
     const authHeader = req.headers.authorization
